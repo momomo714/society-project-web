@@ -1,0 +1,805 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>1942·越剧未死 | 历史解谜</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            user-select: none;
+        }
+
+        body {
+            /* 替换黑色背景为复古暖棕色渐变 */
+            background: linear-gradient(135deg, #2d1f16 0%, #3a291c 50%, #2d1f16 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Noto Serif SC', '华文楷书', 'Microsoft YaHei', serif;
+            padding: 12px;
+        }
+
+        /* 主游戏窗口 — 调整高度确保内容完整显示 */
+        .game-window {
+            max-width: 1300px;
+            width: 100%;
+            height: 92vh; /* 增加高度 */
+            min-height: 580px; /* 降低最小高度适配更多屏幕 */
+            background: #2a1e15; /* 匹配新背景的窗口底色 */
+            border-radius: 28px;
+            box-shadow: 
+                0 20px 60px rgba(0,0,0,0.5),
+                inset 0 0 30px rgba(219, 184, 114, 0.08);
+            overflow: hidden;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            border: 2px solid #dbb87280;
+        }
+
+        /* 舞台区域 — 减少底部padding给控制区留空间 */
+        .stage {
+            flex: 1;
+            background-image: url('background.jpg');
+            background-size: cover;
+            background-position: center 30%;
+            background-repeat: no-repeat;
+            position: relative;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            padding: 15px 6% 10px; /* 减少底部padding */
+            gap: 20px;
+        }
+
+        /* 舞台顶部复古雕花装饰 */
+        .stage::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 60px;
+            background: linear-gradient(to bottom, 
+                rgba(42, 30, 21, 0.9) 0%, 
+                rgba(42, 30, 21, 0.6) 50%, 
+                transparent 100%);
+            z-index: 1;
+            pointer-events: none;
+        }
+
+        /* 舞台聚光效果 */
+        .stage::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 70%;
+            height: 100%;
+            background: radial-gradient(ellipse at center top, 
+                rgba(255, 240, 207, 0.12) 0%, 
+                transparent 70%);
+            z-index: 1;
+            pointer-events: none;
+        }
+        
+        /* 左右立绘区 — 略微降低立绘最大高度 */
+        .sprite-left, .sprite-right {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-end;
+            position: relative;
+            z-index: 2;
+        }
+
+        .sprite-left img, .sprite-right img {
+            max-width: 280px;
+            max-height: 320px; /* 降低立绘高度 */
+            width: auto;
+            height: auto;
+            object-fit: contain;
+            background: transparent;
+            border: none;
+            border-radius: 0;
+            filter: drop-shadow(6px 8px 15px rgba(0,0,0,0.5));
+            transition: transform 0.3s ease, filter 0.3s ease;
+            animation: breathe 4s ease-in-out infinite;
+        }
+
+        .sprite-left:hover img, .sprite-right:hover img {
+            transform: translateY(-5px);
+            filter: drop-shadow(8px 12px 20px rgba(0,0,0,0.6));
+        }
+
+        /* 角色姓名标签 */
+        .sprite-name {
+            margin-top: 10px;
+            font-size: 1.15rem;
+            font-weight: bold;
+            color: #fff0cf;
+            text-shadow: 2px 2px 4px #5e2e14;
+            background: linear-gradient(135deg, 
+                rgba(166, 71, 31, 0.7) 0%, 
+                rgba(94, 46, 20, 0.7) 100%);
+            padding: 5px 22px;
+            border-radius: 40px;
+            backdrop-filter: blur(6px);
+            letter-spacing: 2px;
+            border: 1px solid rgba(255, 221, 153, 0.3);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        }
+
+        /* 底部控制区 — 大幅减少padding和间距 */
+        .control-panel {
+            background: linear-gradient(to top, 
+                rgba(15, 10, 6, 0.92) 0%, 
+                rgba(15, 10, 6, 0.78) 100%);
+            backdrop-filter: blur(16px);
+            border-top: 2px solid #e5bc7c;
+            padding: 14px 24px 18px; /* 减少上下padding */
+            display: flex;
+            flex-direction: column;
+            gap: 12px; /* 减少元素间距 */
+            box-shadow: 0 -10px 30px rgba(0,0,0,0.35);
+        }
+
+        /* 对话气泡 — 减少padding */
+        .dialogue-box {
+            background: linear-gradient(135deg, #fef3e2 0%, #f9e8d0 100%);
+            border-radius: 20px;
+            padding: 12px 22px; /* 减少内边距 */
+            box-shadow: 
+                0 6px 16px rgba(0,0,0,0.25),
+                inset 0 1px 0 rgba(255,255,255,0.7);
+            border-left: 5px solid #c28142;
+            position: relative;
+        }
+
+        /* 对话气泡尖角 — 调整位置 */
+        .dialogue-box::before {
+            content: '';
+            position: absolute;
+            top: -10px;
+            left: 38px;
+            border-left: 10px solid transparent;
+            border-right: 10px solid transparent;
+            border-bottom: 10px solid #fef3e2;
+            filter: drop-shadow(0 -2px 2px rgba(0,0,0,0.1));
+        }
+
+        .speaker-name {
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: #a6471f;
+            display: inline-block;
+            border-right: 2px solid #c28142;
+            padding-right: 14px;
+            margin-right: 12px;
+            text-shadow: 0 1px 0 rgba(255,255,255,0.5);
+        }
+
+        .dialogue-text {
+            font-size: 1.05rem;
+            line-height: 1.5;
+            color: #2c1a0c;
+            margin-top: 6px;
+            min-height: 55px; /* 减少最小高度 */
+            word-break: break-word;
+        }
+
+        /* 选项按钮组 — 减少间距和按钮高度 */
+        .options-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px; /* 减少按钮间距 */
+            margin-top: 2px;
+            justify-content: center;
+        }
+
+        .opt-btn {
+            background: linear-gradient(135deg, #c27e4a 0%, #a55a2e 100%);
+            border: none;
+            border-radius: 50px;
+            padding: 9px 26px; /* 减少按钮内边距 */
+            font-size: 0.95rem;
+            font-family: inherit;
+            font-weight: 600;
+            color: white;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: 
+                0 4px 12px rgba(0,0,0,0.3),
+                inset 0 1px 0 rgba(255,255,255,0.2);
+            flex: 1 0 auto;
+            max-width: 290px;
+            text-align: center;
+            letter-spacing: 1px;
+            text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+        }
+
+        .opt-btn:hover:not(:disabled) {
+            background: linear-gradient(135deg, #d48f5b 0%, #b66b3f 100%);
+            transform: translateY(-2px);
+            box-shadow: 
+                0 6px 16px rgba(0,0,0,0.35),
+                inset 0 1px 0 rgba(255,255,255,0.3);
+        }
+
+        .opt-btn:active:not(:disabled) {
+            transform: translateY(-1px);
+            box-shadow: 
+                0 2px 8px rgba(0,0,0,0.3),
+                inset 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .opt-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+        }
+
+        /* 进度条与知识笔记栏 */
+        .info-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 6px;
+        }
+
+        .convince-count {
+            background: linear-gradient(135deg, 
+                rgba(31, 25, 18, 0.9) 0%, 
+                rgba(15, 10, 7, 0.9) 100%);
+            border-radius: 60px;
+            padding: 6px 20px;
+            color: #ffdd99;
+            font-weight: bold;
+            font-size: 0.9rem;
+            backdrop-filter: blur(4px);
+            border: 1px solid rgba(229, 188, 124, 0.3);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+        }
+
+        .knowledge-btn {
+            background: linear-gradient(135deg, #836b4c 0%, #6a5438 100%);
+            border: none;
+            border-radius: 60px;
+            padding: 6px 22px;
+            color: white;
+            cursor: pointer;
+            font-family: inherit;
+            font-size: 0.85rem;
+            font-weight: 500;
+            transition: all 0.2s ease;
+            box-shadow: 
+                0 2px 8px rgba(0,0,0,0.3),
+                inset 0 1px 0 rgba(255,255,255,0.1);
+        }
+
+        .knowledge-btn:hover {
+            background: linear-gradient(135deg, #947c5d 0%, #7b6549 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.35);
+        }
+
+        /* 现代观察室 (通关后出现) */
+        .modern-zone {
+            background: linear-gradient(135deg, #fff3e4 0%, #f9e8d0 100%);
+            border-radius: 20px;
+            padding: 20px;
+            margin-top: 10px;
+            text-align: center;
+            border: 2px solid #e2bc87;
+            box-shadow: 
+                0 6px 16px rgba(0,0,0,0.2),
+                inset 0 1px 0 rgba(255,255,255,0.7);
+        }
+
+        .modern-zone h3 {
+            color: #a4451c;
+            margin-bottom: 10px;
+            font-size: 1.2rem;
+            text-shadow: 0 1px 0 rgba(255,255,255,0.5);
+        }
+
+        .modern-zone textarea {
+            width: 100%;
+            padding: 10px 14px;
+            border-radius: 14px;
+            border: 1px solid #cfab7b;
+            margin-bottom: 10px;
+            background: linear-gradient(135deg, #fffcf5 0%, #fff9f0 100%);
+            font-family: inherit;
+            resize: vertical;
+            font-size: 0.9rem;
+            line-height: 1.4;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.05);
+            transition: border-color 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .modern-zone textarea:focus {
+            outline: none;
+            border-color: #c28142;
+            box-shadow: 0 0 0 3px rgba(194, 129, 66, 0.2);
+        }
+
+        .submit-btn {
+            background: linear-gradient(135deg, #b55a3a 0%, #9a4a2e 100%);
+            border: none;
+            padding: 8px 28px;
+            border-radius: 40px;
+            color: white;
+            cursor: pointer;
+            font-size: 0.95rem;
+            font-weight: 600;
+            font-family: inherit;
+            transition: all 0.2s ease;
+            box-shadow: 
+                0 4px 12px rgba(0,0,0,0.3),
+                inset 0 1px 0 rgba(255,255,255,0.2);
+            text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+        }
+
+        .submit-btn:hover {
+            background: linear-gradient(135deg, #c66b4b 0%, #ab5b3f 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(0,0,0,0.35);
+        }
+
+        .end-message {
+            margin-top: 14px;
+            font-style: italic;
+            color: #2a6b3c;
+            font-size: 0.95rem;
+            font-weight: 500;
+        }
+
+        footer {
+            text-align: center;
+            font-size: 0.7rem;
+            color: #caae82;
+            padding: 6px 0 0;
+            opacity: 0.8;
+        }
+
+        /* 知识模态框 */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: rgba(20, 13, 8, 0.85); /* 匹配新背景的模态框背景 */
+            justify-content: center;
+            align-items: center;
+            z-index: 2000;
+            backdrop-filter: blur(8px);
+        }
+
+        .modal-card {
+            background: linear-gradient(135deg, #fff3e6 0%, #f9e8d0 100%);
+            max-width: 550px;
+            width: 90%;
+            border-radius: 28px;
+            padding: 28px;
+            border: 3px solid #cd9f6e;
+            box-shadow: 
+                0 20px 60px rgba(0,0,0,0.5),
+                inset 0 1px 0 rgba(255,255,255,0.7);
+            position: relative;
+        }
+
+        .modal-card h3 {
+            color: #a6471f;
+            margin-bottom: 18px;
+            font-size: 1.4rem;
+            text-align: center;
+            text-shadow: 0 1px 0 rgba(255,255,255,0.5);
+        }
+
+        .modal-card p {
+            margin-bottom: 14px;
+            line-height: 1.5;
+            color: #2c1a0c;
+        }
+
+        .close-modal {
+            background: linear-gradient(135deg, #b55a3a 0%, #9a4a2e 100%);
+            border: none;
+            padding: 8px 28px;
+            border-radius: 40px;
+            color: white;
+            margin-top: 18px;
+            cursor: pointer;
+            font-size: 0.95rem;
+            font-weight: 600;
+            font-family: inherit;
+            transition: all 0.2s ease;
+            box-shadow: 
+                0 4px 12px rgba(0,0,0,0.3),
+                inset 0 1px 0 rgba(255,255,255,0.2);
+            display: block;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .close-modal:hover {
+            background: linear-gradient(135deg, #c66b4b 0%, #ab5b3f 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(0,0,0,0.35);
+        }
+
+        /* 响应式优化 — 进一步适配小屏幕 */
+        @media (max-width: 750px) {
+            .sprite-left img, .sprite-right img {
+                max-width: 150px;
+                max-height: 200px;
+            }
+            .options-row .opt-btn {
+                padding: 8px 18px;
+                font-size: 0.85rem;
+            }
+            .dialogue-text {
+                font-size: 0.95rem;
+            }
+            .stage {
+                padding: 12px 12px 8px;
+            }
+            .sprite-name {
+                font-size: 0.95rem;
+                padding: 4px 16px;
+            }
+            .control-panel {
+                padding: 12px 18px 16px;
+            }
+            .dialogue-box {
+                padding: 10px 18px;
+            }
+            .speaker-name {
+                font-size: 1.1rem;
+            }
+            .game-window {
+                height: 94vh;
+            }
+        }
+
+        @media (max-width: 550px) {
+            .sprite-left img, .sprite-right img {
+                max-width: 110px;
+                max-height: 150px;
+            }
+            .game-window {
+                height: 95vh;
+                min-height: 520px;
+            }
+            .control-panel {
+                padding: 10px 14px 14px;
+                gap: 10px;
+            }
+            .dialogue-box {
+                padding: 8px 16px;
+            }
+            .opt-btn {
+                padding: 7px 20px;
+                font-size: 0.8rem;
+            }
+        }
+
+        button {
+            font-family: inherit;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        /* 立绘呼吸动画 */
+        @keyframes breathe {
+            0%, 100% {
+                transform: translateY(0);
+            }
+            50% {
+                transform: translateY(-2px);
+            }
+        }
+    </style>
+</head>
+<body>
+<div class="game-window">
+    <!-- 舞台区：左右半身立绘直接置于背景之上，无任何外框 -->
+    <div class="stage">
+        <div class="sprite-left">
+            <img id="playerSprite" src="player.png" alt="你的立绘" onerror="this.src='data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20200%20200%22%3E%3Crect%20width%3D%22200%22%20height%3D%22200%22%20fill%3D%22%23956e42%22%2F%3E%3Ctext%20x%3D%2250%25%22%20y%3D%2250%25%22%20dominant-baseline%3D%22middle%22%20text-anchor%3D%22middle%22%20fill%3D%22white%22%3E%E2%9C%A8%E4%BD%A0%3C%2Ftext%3E%3C%2Fsvg%3E'">
+            <div class="sprite-name">✨ 文脉旅人</div>
+        </div>
+        <div class="sprite-right">
+            <img id="npcSprite" src="banzhu.png" alt="角色立绘" onerror="this.src='data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20200%20200%22%3E%3Crect%20width%3D%22200%22%20height%3D%22200%22%20fill%3D%22%23b38b5d%22%2F%3E%3Ctext%20x%3D%2250%25%22%20y%3D%2250%25%22%20dominant-baseline%3D%22middle%22%20text-anchor%3D%22middle%22%20fill%3D%22white%22%3E%3C%2Ftext%3E%3C%2Fsvg%3E'">
+            <div id="npcNameLabel" class="sprite-name">班主</div>
+        </div>
+    </div>
+
+    <!-- 底部文字与选项区（半透明毛玻璃，不干扰人物视觉） -->
+    <div class="control-panel">
+        <div class="dialogue-box">
+            <span id="currentSpeaker" class="speaker-name">班主·老赵</span>
+            <div id="currentDialogue" class="dialogue-text">
+                三天内要是拿不出新戏，戏班就解散！你也别想回去了！
+            </div>
+        </div>
+        <div id="optionsArea" class="options-row">
+            <!-- 选项动态生成 -->
+        </div>
+        <div class="info-bar">
+            <span class="convince-count" id="progressDisplay">🗿 说服进度：0 / 3</span>
+            <button class="knowledge-btn" id="openKnowledgeBtn">📜 后世考察笔记</button>
+        </div>
+        <!-- 现代观察室（通关后动态插入） -->
+        <div id="modernZoneWrapper" style="display: none;"></div>
+        <footer>⚡ 依据真实越剧改革史创作 · 新越剧前夜 · 橙光叙事</footer>
+    </div>
+</div>
+
+<!-- 知识模态框 -->
+<div id="knowledgeModal" class="modal">
+    <div class="modal-card">
+        <h3>📖 后世考察笔记</h3>
+        <p><strong>📌 新剧本</strong><br>1946年，袁雪芬将鲁迅《祝福》改编为越剧《祥林嫂》，引发巨大轰动，开创越剧改编文学名著的先河。</p>
+        <p><strong>🎭 新舞美</strong><br>新越剧引入话剧写实布景和灯光，打破传统“一桌二椅”，舞台更贴近真实情境，吸引知识阶层观众。</p>
+        <p><strong>🤝 联合力量</strong><br>1947年，袁雪芬、尹桂芳等十位越剧演员联合义演《山河恋》，为筹建越剧剧场筹款，展现了团结变革的力量。</p>
+        <button class="close-modal" id="closeModalBtn">收起笔记</button>
+    </div>
+</div>
+
+<script>
+    // ========================
+    // 剧情数据
+    // ========================
+    const characters = [
+        { 
+            name: "班主·老赵", 
+            img: "banzhu.png",
+            question: "现在观众爱看老戏，改来改去万一没人看，我这么多兄弟喝西北风？",
+            options: [
+                { text: "坚持演老戏，稳扎稳打。", correct: false, feedback: "班主：废话，这跟没改一样！" },
+                { text: "增加武打场面，热闹就行。", correct: false, feedback: "班主：又不是武戏班，瞎搞！" },
+                { text: "用后世例子：改编文学名著《祝福》成功吸引新观众。", correct: true, feedback: "班主：鲁迅的《祝福》？那个祥林嫂……倒是个好故事。行，你试试看！" }
+            ],
+            successMsg: "班主态度软化：“好，我让你试三天，要是票房好，我就听你的。”"
+        },
+        { 
+            name: "袁雪芬", 
+            img: "yuanxuefen.png",
+            question: "我早就想改，可光靠我一个人，根本斗不过那些老规矩。你有什么办法？",
+            options: [
+                { text: "让她别急，慢慢来。", correct: false, feedback: "袁雪芬：时间不等人，戏班等不起了。" },
+                { text: "劝她联合其他剧团一起改革。", correct: true, feedback: "袁雪芬眼睛一亮：“这个法子好！联合十姐妹，声势就大了。我这就去联络！”" },
+                { text: "劝她自己写个新剧本。", correct: false, feedback: "袁雪芬：我一个人写，没人唱没人看，有什么用？" }
+            ],
+            successMsg: "袁雪芬振奋道：“我这就去找竺水招她们，咱们一起干！”"
+        },
+        { 
+            name: "老琴师", 
+            img: "qinshi.png",
+            question: "改来改去，把老祖宗的东西都丢了，以后还叫越剧吗？",
+            options: [
+                { text: "传统不能丢，坚决不改。", correct: false, feedback: "老琴师：那等死算了。" },
+                { text: "增加西洋乐器，时髦点。", correct: false, feedback: "老琴师：不伦不类！" },
+                { text: "新舞美：布景写实，但唱腔和身段还是越剧的根，改革不是丢掉传统。", correct: true, feedback: "老琴师捋胡子：“旧瓶装新酒？可以试试。我去研究新布景怎么配老唱腔。”" }
+            ],
+            successMsg: "老琴师点头：“好，我信你一次，不能丢了越剧的魂。”"
+        }
+    ];
+
+    // 游戏状态
+    let currentStep = 0;            // 0 班主, 1 袁雪芬, 2 老琴师
+    let convincedCount = 0;         
+    let gameFinished = false;
+    let isProcessing = false;        // 防止连点
+
+    // DOM 元素
+    const npcSprite = document.getElementById('npcSprite');
+    const npcNameLabel = document.getElementById('npcNameLabel');
+    const playerSprite = document.getElementById('playerSprite');
+    const currentSpeakerSpan = document.getElementById('currentSpeaker');
+    const currentDialogueDiv = document.getElementById('currentDialogue');
+    const optionsContainer = document.getElementById('optionsArea');
+    const progressDisplay = document.getElementById('progressDisplay');
+    const modernWrapper = document.getElementById('modernZoneWrapper');
+    const openKnowledgeBtn = document.getElementById('openKnowledgeBtn');
+    const modal = document.getElementById('knowledgeModal');
+    const closeModalBtn = document.getElementById('closeModalBtn');
+
+    // 更新说服进度UI
+    function updateProgressUI() {
+        progressDisplay.innerText = `🗿 说服进度：${convincedCount} / 3`;
+    }
+
+    // 设置对话内容（含说话人）
+    function setDialogue(speakerName, text) {
+        currentSpeakerSpan.innerText = speakerName;
+        currentDialogueDiv.innerText = text;
+    }
+
+    // 重置当前角色的提问（重新显示NPC问题与立绘）
+    function resetToNPCQuestion() {
+        if (gameFinished) return;
+        const char = characters[currentStep];
+        setDialogue(char.name, char.question);
+        npcSprite.src = char.img;
+        npcSprite.onerror = function() { this.src = 'data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20200%20200%22%3E%3Crect%20width%3D%22200%22%20height%3D%22200%22%20fill%3D%22%23b38b5d%22%2F%3E%3Ctext%20x%3D%2250%25%22%20y%3D%2250%25%22%20dominant-baseline%3D%22middle%22%20text-anchor%3D%22middle%22%20fill%3D%22white%22%3E%3C%2Ftext%3E%3C%2Fsvg%3E'; };
+        npcNameLabel.innerText = char.name;
+    }
+
+    // 渲染选项按钮
+    function renderOptions() {
+        if (gameFinished) return;
+        const char = characters[currentStep];
+        optionsContainer.innerHTML = '';
+        char.options.forEach((opt, idx) => {
+            const btn = document.createElement('button');
+            btn.className = 'opt-btn';
+            btn.innerText = opt.text;
+            btn.addEventListener('click', () => onOptionClick(opt));
+            optionsContainer.appendChild(btn);
+        });
+    }
+
+    // 启用/禁用选项
+    function setOptionsEnabled(enabled) {
+        const btns = document.querySelectorAll('.opt-btn');
+        btns.forEach(btn => {
+            if (enabled) btn.removeAttribute('disabled');
+            else btn.setAttribute('disabled', 'disabled');
+        });
+    }
+
+    // 延迟函数
+    function delay(ms) {
+        return new Promise(resolve => setTimeout(resolve, ms));
+    }
+
+    // 处理选项点击（核心叙事逻辑）
+    async function onOptionClick(option) {
+        if (gameFinished || isProcessing) return;
+        isProcessing = true;
+        setOptionsEnabled(false);
+        
+        // 1. 显示玩家所选内容（增强代入感）
+        setDialogue("✨ 你", option.text);
+        await delay(480);
+        
+        // 2. 显示NPC反馈
+        if (!option.correct) {
+            setDialogue(characters[currentStep].name, option.feedback);
+            await delay(1300);
+            resetToNPCQuestion();
+            setOptionsEnabled(true);
+            isProcessing = false;
+            return;
+        }
+        
+        // 正确选项：展示正确反馈 + 成功说服语
+        const char = characters[currentStep];
+        setDialogue(char.name, option.feedback);
+        await delay(1200);
+        setDialogue(char.name, char.successMsg);
+        await delay(1400);
+        
+        // 记录说服成功
+        convincedCount++;
+        updateProgressUI();
+        
+        // 判断是否所有角色均已说服
+        if (currentStep + 1 < characters.length) {
+            currentStep++;
+            // 切换到下一个角色
+            const nextChar = characters[currentStep];
+            npcSprite.src = nextChar.img;
+            npcSprite.onerror = function() { this.src = 'data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20200%20200%22%3E%3Crect%20width%3D%22200%22%20height%3D%22200%22%20fill%3D%22%23b38b5d%22%2F%3E%3Ctext%20x%3D%2250%25%22%20y%3D%2250%25%22%20dominant-baseline%3D%22middle%22%20text-anchor%3D%22middle%22%20fill%3D%22white%22%3E%3C%2Ftext%3E%3C%2Fsvg%3E'; };
+            npcNameLabel.innerText = nextChar.name;
+            setDialogue(nextChar.name, nextChar.question);
+            renderOptions();
+            setOptionsEnabled(true);
+            isProcessing = false;
+        } else {
+            // 游戏通关，展示结局并解锁现代观察室
+            setDialogue("✨ 时空回响 ✨", "一道光芒闪过，你回到了现代。\n手机收到消息：「历史已改变。因为你，越剧改革提前获得支持，新越剧从此走上历史舞台。」");
+            gameFinished = true;
+            optionsContainer.innerHTML = '';    // 清空选项
+            // 右侧立绘换成文脉图腾，左侧不变（你作为传承者）
+            npcSprite.src = 'data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20200%20200%22%3E%3Crect%20width%3D%22200%22%20height%3D%22200%22%20fill%3D%22%23d6a15a%22%2F%3E%3Ctext%20x%3D%2250%25%22%20y%3D%2250%25%22%20dominant-baseline%3D%22middle%22%20text-anchor%3D%22middle%22%20fill%3D%22white%22%3E%E6%96%87%E8%84%89%E7%81%AB%E7%A7%8D%3C%2Ftext%3E%3C%2Fsvg%3E';
+            npcNameLabel.innerText = '文脉薪火';
+            showModernZone();
+            setOptionsEnabled(false);
+            isProcessing = false;
+        }
+    }
+
+    // 显示现代观察室（提交传承建议）
+    function showModernZone() {
+        modernWrapper.style.display = 'block';
+        modernWrapper.innerHTML = `
+            <div class="modern-zone">
+                <h3>🎋 当代越剧观察室</h3>
+                <p>1942年的改革经验（新剧本·新舞美·联合力量），对今天仍有启发。<br>
+                请为当代越剧传承提出三条建议：</p>
+                <textarea id="suggestion1" rows="2" placeholder="建议一：例如「利用短视频推广经典唱段」"></textarea>
+                <textarea id="suggestion2" rows="2" placeholder="建议二：例如「鼓励大学生社团改编越剧迷你剧」"></textarea>
+                <textarea id="suggestion3" rows="2" placeholder="建议三：例如「建立越剧数字博物馆，开放唱词数据库」"></textarea>
+                <button class="submit-btn" id="submitSuggestBtn">📨 提交 · 成为文脉传承者</button>
+                <div id="submitFeedback" class="end-message"></div>
+            </div>
+        `;
+        const submitBtn = document.getElementById('submitSuggestBtn');
+        const submitFeedback = document.getElementById('submitFeedback');
+        if (submitBtn) {
+            submitBtn.addEventListener('click', () => {
+                const sug1 = document.getElementById('suggestion1')?.value.trim() || '';
+                const sug2 = document.getElementById('suggestion2')?.value.trim() || '';
+                const sug3 = document.getElementById('suggestion3')?.value.trim() || '';
+                if (!sug1 && !sug2 && !sug3) {
+                    submitFeedback.innerText = '💡 请至少填写一条建议，让越剧薪火相传。';
+                    return;
+                }
+                submitFeedback.innerText = '🙏 感谢您！您的建议将汇总递交给越剧保护机构。你已成为真正的文脉传承者。';
+                console.log('传承建议：', sug1, sug2, sug3);
+            });
+        }
+    }
+
+    // 初始化游戏
+    function initGame() {
+        currentStep = 0;
+        convincedCount = 0;
+        gameFinished = false;
+        isProcessing = false;
+        modernWrapper.style.display = 'none';
+        modernWrapper.innerHTML = '';
+        updateProgressUI();
+        
+        const firstChar = characters[0];
+        npcSprite.src = firstChar.img;
+        npcSprite.onerror = function() { this.src = 'data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20200%20200%22%3E%3Crect%20width%3D%22200%22%20height%3D%22200%22%20fill%3D%22%23b38b5d%22%2F%3E%3Ctext%20x%3D%2250%25%22%20y%3D%2250%25%22%20dominant-baseline%3D%22middle%22%20text-anchor%3D%22middle%22%20fill%3D%22white%22%3E%3C%2Ftext%3E%3C%2Fsvg%3E'; };
+        npcNameLabel.innerText = firstChar.name;
+        setDialogue(firstChar.name, firstChar.question);
+        renderOptions();
+        setOptionsEnabled(true);
+        // 玩家立绘固定为半身旅人（若无图片则展示默认）
+        playerSprite.src = "player.png";
+        playerSprite.onerror = function() { this.src = 'data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20200%20200%22%3E%3Crect%20width%3D%22200%22%20height%3D%22200%22%20fill%3D%22%23956e42%22%2F%3E%3Ctext%20x%3D%2250%25%22%20y%3D%2250%25%22%20dominant-baseline%3D%22middle%22%20text-anchor%3D%22middle%22%20fill%3D%22white%22%3E%E2%9C%A8%E4%BD%A0%3C%2Ftext%3E%3C%2Fsvg%3E'; };
+    }
+
+    // 知识卡片交互
+    openKnowledgeBtn.addEventListener('click', () => {
+        modal.style.display = 'flex';
+    });
+    closeModalBtn.addEventListener('click', () => {
+        modal.style.display = 'none';
+    });
+    window.addEventListener('click', (e) => {
+        if (e.target === modal) modal.style.display = 'none';
+    });
+    
+    // 启动游戏
+    initGame();
+
+    /* ===============================
+       图片资源说明（需置于项目根目录）：
+       1. background.jpg   — 舞台背景图（1942年代氛围，推荐旧剧院/复古街景）
+       2. player.png       — 玩家半身立绘（穿越者/文旅客形象）
+       3. banzhu.png       — 班主半身立绘
+       4. yuanxuefen.png   — 袁雪芬半身立绘
+       5. qinshi.png       — 老琴师半身立绘
+       如果图片缺失，将自动显示SVG文字占位，不影响游戏运行。
+       背景图不必须，但强烈推荐以增强沉浸感；若无背景图，游戏窗口以深色底呈现。
+    =============================== */
+</script>
+</body>
+</html>
